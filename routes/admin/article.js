@@ -6,31 +6,46 @@ const { Article } = require("../../models");
  * 查询文章列表
  * GET /admin/articles
  */
-router.get("/", async function (req, res) {
+router.get('/', async function (req, res) {
   try {
+    // 获取查询参数
+    const query = req.query;
+
     // 定义查询条件
     const condition = {
-      order: [["id", "DESC"]],
+      order: [['id', 'DESC']]
     };
+
+    // 如果有 title 查询参数，就添加到 where 条件中
+    if(query.title) {
+      condition.where = {
+        title: {
+          [Op.like]: `%${query.title}%`
+        }
+      };
+    }
+
     // 查询数据
     const articles = await Article.findAll(condition);
+
     // 返回查询结果
     res.json({
       status: true,
-      message: "查询文章列表成功。",
+      message: '查询文章列表成功。',
       data: {
-        articles,
-      },
+        articles
+      }
     });
   } catch (error) {
     // 返回错误信息
     res.status(500).json({
       status: false,
-      message: "查询文章列表失败。",
-      errors: [error.message],
+      message: '查询文章列表失败。',
+      errors: [error.message]
     });
   }
 });
+
 
 /**
  * 查询单个文章
@@ -119,5 +134,38 @@ router.delete("/:id", async function (req, res) {
     });
   }
 });
+
+/**
+ * 更新文章
+ * PUT /admin/articles/:id
+ */
+router.put('/:id', async function (req, res) {
+  try {
+    const { id } = req.params;
+    const article = await Article.findByPk(id);
+
+    if (article) {
+      await article.update(req.body);
+
+      res.json({
+        status: true,
+        message: '更新文章成功。',
+        data: article
+      });
+    } else {
+      res.status(404).json({
+        status: false,
+        message: '文章未找到。',
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: '更新文章失败。',
+      errors: [error.message]
+    });
+  }
+});
+
 
 module.exports = router;
